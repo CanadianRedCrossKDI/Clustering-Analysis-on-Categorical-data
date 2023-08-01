@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+import pandas as pd
+get_ipython().system('pip install --user scikit-learn')
+#Insert Survey data excel
+df = pd.read_excel(r'C:\Users\x\yourdata.xlsx')
+print(df)
+df.head()
+df.shape
+df.describe()
+df.info()
+
+
+
+
+#Blank values to " "
+df=df.fillna(' ')
+df.columns = df.columns.str.replace("'","")
+df.head()
+
+
+
+#Clustering
+from kmodes.kmodes import KModes
+#Configure number of cluster
+km_cao = KModes(n_clusters=3, init = "Cao", n_init = 1, verbose=1)
+fitClusters_cao = km_cao.fit_predict((df.loc[:, ~df.columns.isin(['Survey Type', 'Start Date', 'End Date', 'Beneficiarys 16-Digit Case File Number:' , 'Province', 'Postal Code', 'Is the address you provided at registration your primary residence?', 'Were you asked to leave your home as a result of Hurricane Fiona?' ,'Have you been able to return home before Oct 1?','What is preventing you from returning home? (select all that apply) - I have been ordered to leave by provincial or municipal emergency management officials because my house has been deemed unsafe or unlivable', 'What is preventing you from returning home? (select all that apply) - Non-structural damage to home (once we clean-up we will be able to return home)','What is preventing you from returning home? (select all that apply) - Not feeling safe', 'What is preventing you from returning home? (select all that apply) - Power outage', 'What is preventing you from returning home? (select all that apply) - Structural damage to home (unsafe to live our home)','What is preventing you from returning home? (select all that apply) - Unable to access home due to debris, etc.', 'Did you purchase any type of water damage endorsement (sewer back-up, overland flood, etc.) on your home insurance policy?', 'Do you own a small business that was impacted by Hurricane Fiona?'])]))
+
+
+#Display centroids
+clusterCentroidsDf = pd.DataFrame(km_cao.cluster_centroids_)
+dfcolumns = df.loc[:, ~df.columns.isin(['Survey Type', 'Start Date', 'End Date', 'Beneficiarys 16-Digit Case File Number:' , 'Province', 'Postal Code', 'Is the address you provided at registration your primary residence?', 'Were you asked to leave your home as a result of Hurricane Fiona?' ,'Have you been able to return home before Oct 1?','What is preventing you from returning home? (select all that apply) - I have been ordered to leave by provincial or municipal emergency management officials because my house has been deemed unsafe or unlivable', 'What is preventing you from returning home? (select all that apply) - Non-structural damage to home (once we clean-up we will be able to return home)','What is preventing you from returning home? (select all that apply) - Not feeling safe', 'What is preventing you from returning home? (select all that apply) - Power outage', 'What is preventing you from returning home? (select all that apply) - Structural damage to home (unsafe to live our home)','What is preventing you from returning home? (select all that apply) - Unable to access home due to debris, etc.', 'Did you purchase any type of water damage endorsement (sewer back-up, overland flood, etc.) on your home insurance policy?', 'Do you own a small business that was impacted by Hurricane Fiona?'])]
+clusterCentroidsDf.columns = dfcolumns.columns
+clusterCentroidsDf.to_excel(r'C:\Users\x\centroids.xlsx')
+
+
+
+#Combine original data with clusters column
+df_copy = df.copy()
+df = df_copy.reset_index()
+clustersdf = pd.DataFrame(fitClusters_cao)
+clustersdf.columns = ['Predicted_cluster']
+combineddf = pd.concat([df, clustersdf], axis = 1).reset_index()
+combineddf = combineddf.drop(['index', 'level_0'], axis = 1)
+combineddf.head()
+combineddf.to_excel(r'C:\Users\x\Data with clusters column.xlsx')
